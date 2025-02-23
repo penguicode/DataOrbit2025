@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zip Code Geocoding with Fire Data</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+    form {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Zip Code Geocoding & Fire Data Map</h1>
+  <!-- Form to input the ZIP code -->
+  <form id="zipForm">
+    <input type="text" id="zipInput" placeholder="Enter ZIP Code" required />
+    <button type="submit">Find Location</button>
+  </form>
+  <div id="map"></div>
+
+  <!-- Include Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize the map centered on an initial location
+    const map = L.map('map').setView([40.75, -73.95], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker; // Marker for the zip code location
+
+    // Function to plot fire incidents on the map.
+    // fireData is an array of objects with lat, lng, intensity, and date properties.
+    function plotFires(fireData) {
+      fireData.forEach(fire => {
+        // Create a marker for each fire incident.
+        // Optionally, you can use a custom icon by providing an iconUrl.
+        const fireMarker = L.marker([fire.lat, fire.lng], {
+          icon: L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', // Replace with a fire icon URL if desired
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowUrl: 'https://unpkg.com/leaflet/dist/images/marker-shadow.png'
+          })
+        }).addTo(map);
+        
+        const popupContent = `
+          <b>Fire Incident</b><br>
+          <b>Intensity:</b> ${fire.intensity}<br>
+          <b>Date:</b> ${fire.date}
+        `;
+        fireMarker.bindPopup(popupContent);
+      });
+    }
+
+    // Listen for form submission to geocode the zip code.
+    document.getElementById('zipForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const zipCode = document.getElementById('zipInput').value.trim();
+      if (!zipCode) return;
+
+      // Use Nominatim API to geocode the ZIP code (assumes a U.S. ZIP code)
+      const url = `https://nominatim.openstreetmap.org/search?postalcode=${zipCode}&country=USA&format=json`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            // Extract latitude and longitude from the first result
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            // Center the map on the zip code location
+            map.setView([lat, lon], 12);
+            if (marker) {
+              marker.setLatLng([lat, lon]);
+            } else {
+              marker = L.marker([lat, lon]).addTo(map);
+            }
+            marker.bindPopup(`<b>Zip Code:</b> ${zipCode}<br><b>Latitude:</b> ${lat}<br><b>Longitude:</b> ${lon}`).openPopup();
+
+            // Simulate retrieving an array of fire incident coordinates for the zip code.
+            // Later, replace this simulated data with your actual data (e.g., by fetching from an API).
+            const fireData = [
+              { lat: lat + 0.01, lng: lon + 0.01, intensity: 'Moderate', date: '2023-09-20' },
+              { lat: lat - 0.01, lng: lon - 0.005, intensity: 'Severe', date: '2023-09-22' }
+            ];
+
+            // Plot the fire incidents on the map
+            plotFires(fireData);
+          } else {
+            alert("No location found for this ZIP Code.");
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching geocoding data:', error);
+          alert("There was an error retrieving the location.");
+        });
+    });
+  </script>
+</body>
+</html>
