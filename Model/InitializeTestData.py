@@ -58,3 +58,5 @@ training_data_df['month cos'] = np.cos(2 * np.pi * training_data_df['month'] / 1
 training_data_df = training_data_df.drop(['month'], axis=1)
 
 training_data_df = training_data_df.sample(frac=1, random_state=42).reset_index(drop=True)
+
+# print(training_data_df[:10])
