@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Property Value Map by ZIP Code</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Jolly+Lodger&family=Megrim&display=swap" rel="stylesheet">
+  <style>
+    /* General fire theme styling */
+    body {
+      font-family: "Jolly Lodger", serif;
+      margin: 0;
+      padding: 20px;
+      color:black;
+      font-size: 34px;
+      
+    }
+    h1 {
+      font-family: "Megrim", serif;
+      text-align: left;
+      font-size: 60px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+
+    }
+
+    /* Styling for the main menu items */
+    .menu > li {
+            display: inline-block;
+            margin-right: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+            width: 104px;
+            height: 65px;
+            border-radius: 15px;
+        }
+
+        .menu > li > a {
+            color: #000000;
+            text-decoration: none;
+            font-family: Jolly Lodger;
+            font-size: 48px;
+            text-align: center;
+            margin-left: 15px;
+        }
+
+        /* Styling for the dropdown menu */
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+
+        }
+
+        .dropdown a {
+            display: block;
+            color: #333;
+            text-decoration: none;
+            padding: 5px 10px;
+            width: 134px;
+            border-radius: 15px;
+            font-family: Jolly Lodger;
+            font-size: 30px;
+        }
+
+        .dropdown a:hover {
+            background-color: #ddd;
+        }
+
+        /* Display the dropdown menu on hover */
+        .menu > li:hover .dropdown {
+            display: block;
+        }
+        
+        /* Position the menu at a specific spot on the screen */
+        .positioned-menu {
+            position: absolute;
+            top: 42px; /* Adjust as needed */
+            left: 1200px; /* Adjust as needed */
+        }
+
+    #zipForm {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    #zipForm label {
+      margin-right: 10px;
+      font-weight: 700;
+      font-size: 40px;
+    }
+    #zipForm input[type="text"] {
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      outline: none;
+      width: 150px;
+      font-family: "Jolly Lodger", serif;
+      font-size: 40px;
+      background-color:#BC3908;
+      opacity: 0.5;
+    }
+    #zipForm button {
+      padding: 8px 16px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 4px;
+      background: linear-gradient(45deg, #ff4500, #ff8c00);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #zipForm button:hover {
+      background: linear-gradient(45deg, #ff8c00, #ff4500);
+    }
+    #map {
+      height: 600px;
+      width: 100%;
+      border: 2px solid #ff4500;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .legend {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      line-height: 18px;
+      color: #fff;
+      border-radius: 4px;
+    }
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.9;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Property Value Map by ZIP Code</h1>
+  <!-- ZIP code search form -->
+  <form id="zipForm">
+    <label for="zipCode">Enter ZIP Code:</label>
+    <input type="text" id="zipCode" required>
+    <button type="submit">Zoom</button>
+  </form>
+  <div id="map"></div>
+  
+
+  <!-- Include Leaflet and Papa Parse libraries -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script>
+    // Initialize the map over California
+    var map = L.map('map').setView([36.7783, -119.4179], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Variable for the ZIP code marker.
+    var zipMarker;
+
+    // Constant inflation multiplier: inflate median house values by 4.5x.
+    const INFLATION_MULTIPLIER = 4.5;
+
+    // Function: Determine circle color based on the inflated median value.
+    function getColor(value) {
+      return value > 4500000 ? '#800026' :  // darkest red
+             value > 3375000 ? '#BD0026' :
+             value > 2250000 ? '#E31A1C' :
+             value > 1500000 ? '#FC4E2A' :
+             value > 1125000 ? '#FD8D3C' :
+             value > 900000  ? '#FEB24C' :
+             value > 675000  ? '#FED976' :
+             value > 450000  ? '#FFEDA0' :
+                              '#ffffcc';
+    }
+
+    // Function: Compute circle radius (in meters) based on the inflated property value.
+    function getRadius(value) {
+      const scalingFactor = 0.0002;
+      return value * scalingFactor;
+    }
+
+    // Parse the CSV file with housing data.
+    Papa.parse("CA_Housing.csv", {
+      download: true,
+      header: true,
+      dynamicTyping: true,
+      complete: function(results) {
+        var data = results.data;
+        data.forEach(function(record) {
+          var lat = record.Latitude;
+          var lon = record.Longitude;
+          var medianValue = record.Median_House_Value;
+          if (lat && lon && medianValue) {
+            var inflatedValue = medianValue * INFLATION_MULTIPLIER;
+            var circle = L.circle([lat, lon], {
+              radius: getRadius(inflatedValue),
+              color: getColor(inflatedValue),
+              fillColor: getColor(inflatedValue),
+              fillOpacity: 0.5,
+              weight: 1
+            }).addTo(map);
+            circle.bindPopup("<strong>Median House Value:</strong> $" + inflatedValue.toLocaleString());
+          }
+        });
+      },
+      error: function(err) {
+        console.error("Error parsing CSV:", err);
+      }
+    });
+
+    // Add a legend to interpret the colors.
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+      var div = L.DomUtil.create('div', 'legend');
+      var originalGrades = [0, 100000, 150000, 250000, 500000, 750000, 1000000];
+      var inflatedGrades = originalGrades.map(function(val) {
+        return val * INFLATION_MULTIPLIER;
+      });
+      div.innerHTML += '<strong>Inflated Median House Value</strong><br>';
+      for (var i = 0; i < inflatedGrades.length; i++) {
+        div.innerHTML +=
+          '<i style="background:' + getColor(inflatedGrades[i] + 1) + '"></i> ' +
+          inflatedGrades[i].toLocaleString() + (inflatedGrades[i + 1] ? '&ndash;' + inflatedGrades[i + 1].toLocaleString() + '<br>' : '+');
+      }
+      return div;
+    };
+    legend.addTo(map);
+
+    // Function: Get latitude and longitude for a ZIP code using Zippopotam.us API.
+    async function getZipCoordinates(zipCode) {
+      try {
+        const response = await fetch(`http://api.zippopotam.us/us/${zipCode}`);
+        if (!response.ok) {
+          throw new Error("Zip code not found");
+        }
+        const data = await response.json();
+        const { latitude, longitude } = data.places[0];
+        return { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
+      } catch (error) {
+        console.error("Error in geocoding:", error);
+        alert("Error: " + error.message);
+      }
+    }
+
+    // Event listener: Zoom into the entered ZIP code.
+    document.getElementById("zipForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      var zipCode = document.getElementById("zipCode").value.trim();
+      var coords = await getZipCoordinates(zipCode);
+      if (coords) {
+        map.setView([coords.latitude, coords.longitude], 14);
+        if (zipMarker) {
+          zipMarker.setLatLng([coords.latitude, coords.longitude]);
+        } else {
+          zipMarker = L.marker([coords.latitude, coords.longitude]).addTo(map);
+        }
+        zipMarker.bindPopup("ZIP Code: " + zipCode).openPopup();
+      }
+    });
+  </script>
+  <ul class="menu positioned-menu">
+    <li>
+        <a href="index.html">Home</a>
+    </li>
+  </ul>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>California Fire Boundaries - Filter by Year</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- noUiSlider CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Jolly+Lodger&family=Megrim&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Jolly Lodger", serif; margin: 0; padding: 10px; }
+    h1 { font-family: "Megrim", serif; text-align: center; font-size: 2.5em; margin-bottom: 20px; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); }
+    #map { height: 600px; width: 100%; }
+    #controls { padding: 10px; background: #ffffff; }
+    #yearSlider { margin: 20px 0; }
+    /* Styling for the main menu items */
+    .menu > li {
+            display: inline-block;
+            margin-right: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+            width: 104px;
+            height: 65px;
+            border-radius: 15px;
+        }
+
+        .menu > li > a {
+            color: #000000;
+            text-decoration: none;
+            font-family: Jolly Lodger;
+            font-size: 48px;
+            text-align: center;
+            margin-left: 15px;
+        }
+
+        /* Styling for the dropdown menu */
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+
+        }
+
+        .dropdown a {
+            display: block;
+            color: #333;
+            text-decoration: none;
+            padding: 5px 10px;
+            width: 134px;
+            border-radius: 15px;
+            font-family: Jolly Lodger;
+            font-size: 30px;
+        }
+
+        .dropdown a:hover {
+            background-color: #ddd;
+        }
+
+        /* Display the dropdown menu on hover */
+        .menu > li:hover .dropdown {
+            display: block;
+        }
+        
+        /* Position the menu at a specific spot on the screen */
+        .positioned-menu {
+            position: absolute;
+            top: 42px; /* Adjust as needed */
+            left: 1200px; /* Adjust as needed */
+        }
+  </style>
+</head>
+<body>
+  <h1>California Fire Map - Filtered by Year</h1>
+  <ul class="menu positioned-menu">
+    <li>
+        <a href="index.html">Home</a>
+    </li>
+  </ul>
+
+  
+  <!-- Controls Section -->
+  <div id="controls">
+    <label for="zipInput">Enter ZIP Code:</label>
+    <input type="text" id="zipInput" placeholder="e.g., 90001" />
+    <button id="findZip">Find Location</button>
+    <br /><br />
+    <label>Filter Fire Incidents by Year:</label>
+    <div id="yearSlider"></div>
+    <div id="yearRangeDisplay"></div>
+  </div>
+  
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Include Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Include noUiSlider JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
+  <script>
+    // Making the date string smaller 
+    function formatDate(dateString) {
+    const date = new Date(dateString);
+   return date.toLocaleDateString(); // Formats to something like "6/17/2023"
+}
+
+
+    // Initialize the map centered on California
+    const map = L.map('map').setView([36.7783, -119.4179], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let zipMarker; // Marker for ZIP code geocoding
+    let fireLayerGroup = L.layerGroup().addTo(map); // Group to hold fire boundaries
+    let rawGeojsonData = null; // To store the loaded GeoJSON
+
+    // Create the slider first so it's available when updateFireMarkers is called.
+    const yearSlider = document.getElementById('yearSlider');
+    noUiSlider.create(yearSlider, {
+      start: [2018, 2023],
+      connect: true,
+      step: 1,
+      range: {
+        min: 2000,
+        max: 2023
+      },
+      tooltips: [true, true],
+      format: {
+        to: value => Math.round(value),
+        from: value => Number(value)
+      }
+    });
+    // Update boundaries when slider values change.
+    yearSlider.noUiSlider.on('update', updateFireMarkers);
+
+    // Function to update boundaries based on slider range.
+    function updateFireMarkers() {
+      if (!rawGeojsonData) return;
+      // Get the current slider values.
+      const [startYear, endYear] = yearSlider.noUiSlider.get().map(v => parseInt(v));
+      document.getElementById('yearRangeDisplay').innerHTML =
+        `Showing fires between <strong>${startYear}</strong> and <strong>${endYear}</strong>`;
+      
+      // Clear existing boundaries.
+      fireLayerGroup.clearLayers();
+      
+      // Create a new GeoJSON layer filtered by the selected year range.
+      const filteredLayer = L.geoJSON(rawGeojsonData, {
+        // Style the polygon boundaries.
+        style: function(feature) {
+          return {
+            color: '#ff7800',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.2
+          };
+        },
+        // Use the YEAR_ property for filtering.
+        filter: function(feature) {
+          if (!feature.properties || feature.properties.YEAR_ === undefined) return false;
+          const featureYear = parseInt(feature.properties.YEAR_);
+          return featureYear >= startYear && featureYear <= endYear;
+        },
+        // Bind popups with details.
+        onEachFeature: function(feature, layer) {
+          const props = feature.properties;
+          layer.bindPopup(
+            `<b>Fire Name:</b> ${props.FIRE_NAME}<br>
+             <b>Alarm Date:</b> ${formatDate(props.ALARM_DATE)}<br>
+             <b>GIS Acres:</b> ${props.GIS_ACRES}<br>
+             <b>Year:</b> ${props.YEAR_}`
+          );
+        }
+      });
+      
+      // Add the filtered layer to the map.
+      filteredLayer.addTo(fireLayerGroup);
+    }
+
+    // Fetch the GeoJSON file.
+    fetch('med_quality.geojson')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(geojsonData => {
+        rawGeojsonData = geojsonData;
+        updateFireMarkers();
+      })
+      .catch(error => {
+        console.error('Error loading GeoJSON:', error);
+      });
+
+    // Optional: ZIP Code Geocoding using Nominatim.
+    document.getElementById('findZip').addEventListener('click', function() {
+      const zipCode = document.getElementById('zipInput').value.trim();
+      if (!zipCode) return;
+      const url = `https://nominatim.openstreetmap.org/search?postalcode=${zipCode}&country=USA&format=json`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            map.setView([lat, lon], 12);
+            if (zipMarker) {
+              zipMarker.setLatLng([lat, lon]);
+            } else {
+              zipMarker = L.marker([lat, lon]).addTo(map);
+            }
+            zipMarker.bindPopup(
+              `<b>ZIP Code:</b> ${zipCode}<br>
+               <b>Latitude:</b> ${lat}<br>
+               <b>Longitude:</b> ${lon}`
+            ).openPopup();
+          } else {
+            alert("No location found for this ZIP Code.");
+          }
+        })
+        .catch(error => {
+          console.error('Error during geocoding:', error);
+          alert("There was an error retrieving the location.");
+        });
+    });
+  </script>
+</body>
+</html>

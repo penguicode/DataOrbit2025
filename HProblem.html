@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FireGuard Home</title>
+    <link rel="stylesheet" href="Hstyles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jolly+Lodger&family=Megrim&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styling for the menu */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            position: relative;
+        }
+
+        /* Styling for the main menu items */
+        .menu > li {
+            display: inline-block;
+            margin-right: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+            width: 104px;
+            height: 65px;
+            border-radius: 15px;
+        }
+
+        .menu > li > a {
+            color: #000000;
+            text-decoration: none;
+            font-family: Jolly Lodger;
+            font-size: 48px;
+            text-align: center;
+            margin-left: 15px;
+        }
+
+        /* Styling for the dropdown menu */
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+
+        }
+
+        .dropdown a {
+            display: block;
+            color: #333;
+            text-decoration: none;
+            padding: 5px 10px;
+            width: 134px;
+            border-radius: 15px;
+            font-family: Jolly Lodger;
+            font-size: 30px;
+        }
+
+        .dropdown a:hover {
+            background-color: #ddd;
+        }
+
+        /* Display the dropdown menu on hover */
+        .menu > li:hover .dropdown {
+            display: block;
+        }
+        
+        /* Position the menu at a specific spot on the screen */
+        .positioned-menu {
+            position: absolute;
+            top: 42px; /* Adjust as needed */
+            left: 49px; /* Adjust as needed */
+        }
+    </style>
+</head>
+<body>
+    <div style="width: 1440px; height: 1024px; position: relative; background: white">
+        <div style="width: 1473px; height: 178px; left: 0px; top: 0px; position: absolute">
+            <div style="width: 1440px; height: 178px; left: 1px; top: 0px; position: absolute; background: #941B0C"></div>
+            <div data-svg-wrapper style="left: 0px; top: 0px; position: absolute">
+            <svg width="1440" height="178" viewBox="0 0 1440 178" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M904.5 0L952 88.5137H904.5H857L904.5 0Z" fill="#941B0C"/>
+            <path d="M618.5 0L666 88.5137H618.5H571L618.5 0Z" fill="#941B0C"/>
+            <path d="M332.5 0L380 88.5137H332.5H285L332.5 0Z" fill="#941B0C"/>
+            <path d="M807.5 178L760 89.4863H807.5H855L807.5 178Z" fill="#941B0C"/>
+            <path d="M96.5 89.4863L49 0.972673H96.5H144L96.5 89.4863Z" fill="#941B0C"/>
+            <path d="M1328.5 89.4863L1281 0.972673H1328.5H1376L1328.5 89.4863Z" fill="#941B0C"/>
+            <path d="M1185.5 178L1138 89.4863H1185.5H1233L1185.5 178Z" fill="#941B0C"/>
+            <path d="M48.5 0.972679L96 89.4863H48.5H1L48.5 0.972679Z" fill="#BC3908"/>
+            <path d="M94.5 89.4863L142 178H94.5H47L94.5 89.4863Z" fill="#BC3908"/>
+            <path d="M1377.5 0.972679L1425 89.4863H1377.5H1330L1377.5 0.972679Z" fill="#BC3908"/>
+            <path d="M951.5 89.4863L999 178H951.5H904L951.5 89.4863Z" fill="#BC3908"/>
+            <path d="M761.5 89.4863L809 178H761.5H714L761.5 89.4863Z" fill="#BC3908"/>
+            <path d="M570.5 89.4863L618 178H570.5H523L570.5 89.4863Z" fill="#BC3908"/>
+            <path d="M378.5 89.4863L426 178H378.5H331L378.5 89.4863Z" fill="#BC3908"/>
+            <path d="M236.5 178L189 89.4863H236.5H284L236.5 178Z" fill="#BC3908"/>
+            <path d="M1281.5 178L1234 89.4863H1281.5H1329L1281.5 178Z" fill="#BC3908"/>
+            <path d="M1139.5 89.4863L1092 0.972673H1139.5H1187L1139.5 89.4863Z" fill="#BC3908"/>
+            <path d="M855.5 89.4863L808 0.972673H855.5H903L855.5 89.4863Z" fill="#BC3908"/>
+            <path d="M474.5 89.4863L427 0.972673H474.5H522L474.5 89.4863Z" fill="#BC3908"/>
+            <path d="M143.5 0.972679L191 89.4863H143.5H96L143.5 0.972679Z" fill="#F5A614"/>
+            <path d="M1329.5 89.4863L1377 178H1329.5H1282L1329.5 89.4863Z" fill="#F5A614"/>
+            <path d="M1187.5 0.972679L1235 89.4863H1187.5H1140L1187.5 0.972679Z" fill="#F5A614"/>
+            <path d="M856.5 89.4863L904 178H856.5H809L856.5 89.4863Z" fill="#F5A614"/>
+            <path d="M666.5 89.4863L714 178H666.5H619L666.5 89.4863Z" fill="#F5A614"/>
+            <path d="M282.5 89.4863L330 178H282.5H235L282.5 89.4863Z" fill="#F5A614"/>
+            <path d="M1.00008 91.253V0.97268H49.052L1.00008 91.253Z" fill="#F5A614"/>
+            <path d="M1425.5 89.4863L1378 0.972673H1425.5H1473L1425.5 89.4863Z" fill="#F5A614"/>
+            <path d="M1092.5 178L1045 89.4863H1092.5H1140L1092.5 178Z" fill="#F5A614"/>
+            <path d="M951.5 89.4863L904 0.972673H951.5H999L951.5 89.4863Z" fill="#F5A614"/>
+            <path d="M760.5 89.4863L713 0.972673H760.5H808L760.5 89.4863Z" fill="#F5A614"/>
+            <path d="M378.5 89.4863L331 0.972673H378.5H426L378.5 89.4863Z" fill="#F5A614"/>
+            <path d="M47.5 178L-6.17347e-07 89.4863H47.5H95L47.5 178Z" fill="#220901"/>
+            <path d="M1046.5 89.4863L999 0.972673H1046.5H1094L1046.5 89.4863Z" fill="#220901"/>
+            <path d="M998.5 178L951 89.4863H998.5H1046L998.5 178Z" fill="#220901"/>
+            <path d="M618.5 178L571 89.4863H618.5H666L618.5 178Z" fill="#220901"/>
+            <path d="M426.5 178L379 89.4863H426.5H474L426.5 178Z" fill="#220901"/>
+            <path d="M188.5 89.4863L236 178H188.5H141L188.5 89.4863Z" fill="#220901"/>
+            <path d="M237.5 0.972679L285 89.4863H237.5H190L237.5 0.972679Z" fill="#220901"/>
+            <path d="M1280.5 0.972679L1328 89.4863H1280.5H1233L1280.5 0.972679Z" fill="#220901"/>
+            <path d="M1425.5 89.4863L1473 178H1425.5H1378L1425.5 89.4863Z" fill="#220901"/>
+            <path d="M1232.5 89.4863L1280 178H1232.5H1185L1232.5 89.4863Z" fill="#220901"/>
+            <path d="M712.5 0.972679L760 89.4863H712.5H665L712.5 0.972679Z" fill="#220901"/>
+            <path d="M522.5 0.972679L570 89.4863H522.5H475L522.5 0.972679Z" fill="#220901"/>
+            <path d="M1.5 89.4863L49 178H1.5V89.4863Z" fill="#621708"/>
+            <path d="M1139.5 89.4863L1187 178H1139.5H1092L1139.5 89.4863Z" fill="#621708"/>
+            <path d="M1092.5 0.972679L1140 89.4863H1092.5H1045L1092.5 0.972679Z" fill="#621708"/>
+            <path d="M998.5 0.972679L1046 89.4863H998.5H951L998.5 0.972679Z" fill="#621708"/>
+            <path d="M808.5 0.972679L856 89.4863H808.5H761L808.5 0.972679Z" fill="#621708"/>
+            <path d="M426.5 0.972679L474 89.4863H426.5H379L426.5 0.972679Z" fill="#621708"/>
+            <path d="M190.5 89.4863L143 0.972673H190.5H238L190.5 89.4863Z" fill="#621708"/>
+            <path d="M141.5 178L94 89.4863H141.5H189L141.5 178Z" fill="#621708"/>
+            <path d="M1377.5 178L1330 89.4863H1377.5H1425L1377.5 178Z" fill="#621708"/>
+            <path d="M904.5 178L857 89.4863H904.5H952L904.5 178Z" fill="#621708"/>
+            <path d="M714.5 178L667 89.4863H714.5H762L714.5 178Z" fill="#621708"/>
+            <path d="M665.5 89.4863L618 0.972673H665.5H713L665.5 89.4863Z" fill="#621708"/>
+            <path d="M569.5 89.4863L522 0.972673H569.5H617L569.5 89.4863Z" fill="#621708"/>
+            <path d="M522.5 178L475 89.4863H522.5H570L522.5 178Z" fill="#621708"/>
+            <path d="M330.5 178L283 89.4863H330.5H378L330.5 178Z" fill="#621708"/>
+            <path d="M1441 60.7924V88.5137H1426L1441 60.7924Z" fill="#BC3908"/>
+            <path d="M1442.5 120.612L1426 89H1442.5V120.612Z" fill="#941B0C"/>
+            </svg>
+            </div>
+        </div>
+        <img style="width: 1440px; height: 848px; left: 0px; top: 178px; position: absolute; opacity: 0.50" src="https://images.unsplash.com/photo-1621525332263-6643c2ed0fa3?q=80&w=2938&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" />
+        <div style="width: 1440px; height: 350px; top: 676px; position: absolute; background: rgba(223, 80, 2, 0.65)"></div>
+        <div style="width: 463.55px; height: 85.92px; left: 435px; top: 35px; position: absolute; text-align: center; color: white; font-size: 77px; font-family: Megrim; font-weight: 500; word-wrap: break-word; text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25)">The Problem</div>
+        <div style="width: 1318px; left: 58px; top: 231px; position: absolute; color: black; font-size: 33px; font-family: Jolly Lodger; font-weight: 400; word-wrap: break-word">Between the beginning of January and the end of February, seven fires have raged through California, killing 29 people and destroying more than 15,000 homes, businesses, and other buildings. These fires have burned almost 40,000 acres in these past two months. </div>
+        <div style="width: 843px; left: 542px; top: 330px; position: absolute; text-align: right; color: black; font-size: 33px; font-family: Jolly Lodger; font-weight: 400; word-wrap: break-word">Fires are one of the most destructive natural disasters, leaving behind a path of devastation. Unfortunately for California, fires are commonplace, and state experts are warning that we are entering a period of “mega-fires.” Not only do wildfires obliterate communities and cause immediate and long-term environmental damage, but they also leave an emotional toll on both individuals and communities as they face the daunting the  daunting task of rebuilding their lives from the ashes.</div>
+        <img style="width: 472px; height: 327px; left: 25px; top: 331px; position: absolute; border-radius: 15px; border: 2px black solid" src="https://github.com/penguicode/DataOrbit2025/blob/main/Images/5auO9-statewide-annual-acres-burned-2000-2023%20(1).png?raw=true" />
+        <div style="left: 15px; top: 991px; position: absolute; color: black; font-size: 20px; font-family: Jolly Lodger; font-weight: 400; word-wrap: break-word">Text Citation: O’Hara-Glaspie, Kristy J. “California Fires: Facts, Faqs, and How to Help.” World Vision, February 3, 2025. https://www.worldvision.org/disaster-relief-news-stories/california-fires-facts-faqs-how-to-help.</div>
+        <div style="width: 770px; left: 56px; top: 685px; position: absolute; color: black; font-size: 33px; font-family: Jolly Lodger; font-weight: 400; word-wrap: break-word">Monitoring fire locations on a map is crucial for ensuring safety and preparedness. Fires can spread rapidly, posing significant risks to life and property. By regularly checking fire maps, individuals and communities can stay informed about current fires. Fire maps also aid in understanding fire patterns and risk areas, helping residents make informed decisions about living in fire-prone regions. Ultimately, staying aware of fire locations through maps can save lives and mitigate the devastating impact of wildfires.</div>
+        <img style="width: 548px; height: 308px; left: 864px; top: 623px; position: absolute; border-radius: 15px; border: 2px black solid" src="https://images.unsplash.com/photo-1519373533972-d0fc32881b46?q=80&w=3132&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" />
+        </div>
+<ul class="menu positioned-menu">
+    <li>
+        <a href="#">Menu</a>
+        <ul class="dropdown">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="HAbout.html">About Us</a></li>
+            <li><a href="FireMap.html">California Fire Map</a></li>
+            <li><a href="propValue.html">Property Value Map</a></li>
+        </ul>
+    </li>
+</ul>
+</body>
+</html>
