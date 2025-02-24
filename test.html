@@ -1,170 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>California Fire Boundaries - Filter by Year</title>
-  <!-- Leaflet CSS -->
+  <meta charset="utf-8" />
+  <title>California Map - Zip Code to Coordinates & Nearby Fires</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- noUiSlider CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    #map { height: 600px; width: 100%; }
-    #controls { padding: 10px; background: #f9f9f9; }
-    #yearSlider { margin: 20px 0; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #map {
+      width: 600px;
+      height: 400px;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>California Fire Boundaries - Filter by Year</h1>
-  
-  <!-- Controls Section -->
-  <div id="controls">
-    <label for="zipInput">Enter ZIP Code:</label>
-    <input type="text" id="zipInput" placeholder="e.g., 90001" />
-    <button id="findZip">Find Location</button>
-    <br /><br />
-    <label>Filter Fire Incidents by Year:</label>
-    <div id="yearSlider"></div>
-    <div id="yearRangeDisplay"></div>
+  <h1>California Map</h1>
+  <div>
+    <label for="zipcode">Enter Zip Code: </label>
+    <input type="text" id="zipcode" placeholder="e.g., 90001">
+    <button id="geocodeBtn">Find Location</button>
   </div>
-  
-  <!-- Map Container -->
   <div id="map"></div>
 
-  <!-- Include Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- Include noUiSlider JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
   <script>
-    // Making the date string smaller 
-    function formatDate(dateString) {
-    const date = new Date(dateString);
-   return date.toLocaleDateString(); // Formats to something like "6/17/2023"
+    const request = new XMLHttpRequest();
+    request.open("GET", "low_quality.geojson", false); // `false` makes the request synchronous
+    request.send(null);
+
+    var data = JSON.parse(request.response).features;
+
+    // Function to check nearby fires
+    function get_nearby_fires(circle_center, circle_radius) {
+   let collisions = []
+   for (const features of data) {
+      geometry = features.geometry
+      //console.log(features.properties["FIRE_NAME"])
+      //console.log(geometry.type)
+      if (geometry.type == 'Polygon') {
+         let polygon = geometry.coordinates[0]
+         let polygon_half = Math.floor(polygon.length/2);
+         //console.log(polygon_half)
+         let center = [(polygon[0][0] + polygon[polygon_half][0])/2, (polygon[0][1]+polygon[polygon_half][1])/2]
+         if (dist(center, circle_center) <= circle_center) break;
+         for (const points of polygon) {
+            if (dist(points, circle_center) <= circle_radius) {
+               break;
+            }
+         }
+         let point1 = polygon[0]
+         if (lineCircle(polygon[0], polygon[polygon.length-1], circle_center, circle_radius)) {
+            collisions.push(features)
+         }else {
+            for (let i = 1; i < polygon.length; i++) {
+               let point2 = polygon[i]
+               if (lineCircle(point1, point2, circle_center, circle_radius)) {
+                  collisions.push(features)
+                  break;
+               }
+               point1 = point2
+            }
+         }
+      } else {
+         //console.log(geometry.coordinates)
+         for (const polygon of geometry.coordinates[0]) {
+            let polygon_half = Math.floor(polygon.length/2);
+            //console.log(polygon_half)
+            let center = [(polygon[0][0] + polygon[polygon_half][0])/2, (polygon[0][1]+polygon[polygon_half][1])/2]
+            if (dist(center, circle_center) <= circle_center) break;
+            let hasCollide = false;
+   
+            for (const points of polygon) {
+               if (dist(points, circle_center) <= circle_radius) {
+                  collisions.push(features)
+                  hasCollide = true;
+                  break;
+               }
+            }
+            if (hasCollide) break;
+            let point1 = polygon[0]
+            if (lineCircle(polygon[0], polygon[polygon.length-1], circle_center, circle_radius)) {
+               collisions.push(features)
+               hasCollide = true;
+               break;
+            } else {
+               for (let i = 1; i < polygon.length; i++) {
+                  let point2 = polygon[i]
+                  if (lineCircle(point1, point2, circle_center, circle_radius)) {
+                     collisions.push(features)
+                     hasCollide = true;
+                     break;
+                  }
+                  point1 = point2
+               }
+            }
+            if (hasCollide) break;
+         }
+      }
+   
+   }
+   
+   // LINE/CIRCLE
+   function lineCircle(point1, point2, circle_center, circle_radius) {
+    
+      // get length of the line
+      let len = dist(point1, point2)
+    
+      // get dot product of the line and circle
+      let dot = ( ((circle_center[0]-point1[0])*(point2[0]-point1[0])) + ((circle_center[1]-point1[1])*(point2[1]-point1[1])) ) / Math.pow(len,2);
+    
+      // find the closest point on the line
+      let closestX = point1[0] + (dot * (point2[0]-point1[0]));
+      let closestY = point1[1] + (dot * (point2[1]-point1[1]));
+    
+      // is this point actually on the line segment?
+      // if so keep going, but if not, return false
+      let onSegment = linePoint(point1, point2, [closestX,closestY]);
+      if (!onSegment) return false;
+    
+      // get distance to closest point
+      distX = closestX - circle_center[0];
+      distY = closestY - circle_center[1];
+      let distance = Math.sqrt( (distX*distX) + (distY*distY) );
+    
+      if (distance <= circle_radius) {
+        return true;
+      }
+      return false;
+    }
+   
+   function dist(point1, point2) {
+      return Math.sqrt(Math.pow(point1[0]-point2[0], 2) + Math.pow(point1[1]-point2[1], 2))
+   }
+   
+   // LINE/POINT
+   function linePoint(point1, point2, point3) {
+   
+      // get distance from the point to the two ends of the line
+   
+      let d1 = dist(point3, point1);
+      let d2 = dist(point3, point2);
+    
+      // get the length of the line
+      let lineLen = dist(point1, point2);
+    
+      // since floats are so minutely accurate, add
+      // a little buffer zone that will give collision
+      let buffer = 0.001;    // higher # = less accurate
+    
+      // if the two distances are equal to the line's
+      // length, the point is on the line!
+      // note we use the buffer here to give a range,
+      // rather than one #
+      if (d1+d2 >= lineLen-buffer && d1+d2 <= lineLen+buffer) {
+        return true;
+      }
+      return false;
+    }
+    return collisions
 }
 
-
     // Initialize the map centered on California
-    const map = L.map('map').setView([36.7783, -119.4179], 6);
+    var map = L.map('map').setView([36.7783, -119.4179], 6);
+    
+    // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    let zipMarker; // Marker for ZIP code geocoding
-    let fireLayerGroup = L.layerGroup().addTo(map); // Group to hold fire boundaries
-    let rawGeojsonData = null; // To store the loaded GeoJSON
+    // Layer group for fire markers
+    var fireLayer = L.layerGroup().addTo(map);
 
-    // Create the slider first so it's available when updateFireMarkers is called.
-    const yearSlider = document.getElementById('yearSlider');
-    noUiSlider.create(yearSlider, {
-      start: [2018, 2023],
-      connect: true,
-      step: 1,
-      range: {
-        min: 2000,
-        max: 2023
-      },
-      tooltips: [true, true],
-      format: {
-        to: value => Math.round(value),
-        from: value => Number(value)
+    // Add event listener to the "Find Location" button
+    document.getElementById('geocodeBtn').addEventListener('click', function() {
+      var zipcode = document.getElementById('zipcode').value.trim();
+      if (!zipcode) {
+        alert('Please enter a zip code');
+        return;
       }
-    });
-    // Update boundaries when slider values change.
-    yearSlider.noUiSlider.on('update', updateFireMarkers);
-
-    // Function to update boundaries based on slider range.
-    function updateFireMarkers() {
-      if (!rawGeojsonData) return;
-      // Get the current slider values.
-      const [startYear, endYear] = yearSlider.noUiSlider.get().map(v => parseInt(v));
-      document.getElementById('yearRangeDisplay').innerHTML =
-        `Showing fires between <strong>${startYear}</strong> and <strong>${endYear}</strong>`;
       
-      // Clear existing boundaries.
-      fireLayerGroup.clearLayers();
+      // Use Nominatim API with a combined query string to convert zip code to coordinates
+      var query = encodeURIComponent(zipcode + ', California, USA');
+      var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + query;
       
-      // Create a new GeoJSON layer filtered by the selected year range.
-      const filteredLayer = L.geoJSON(rawGeojsonData, {
-        // Style the polygon boundaries.
-        style: function(feature) {
-          return {
-            color: '#ff7800',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.2
-          };
-        },
-        // Use the YEAR_ property for filtering.
-        filter: function(feature) {
-          if (!feature.properties || feature.properties.YEAR_ === undefined) return false;
-          const featureYear = parseInt(feature.properties.YEAR_);
-          return featureYear >= startYear && featureYear <= endYear;
-        },
-        // Bind popups with details.
-        onEachFeature: function(feature, layer) {
-          const props = feature.properties;
-          layer.bindPopup(
-            `<b>Fire Name:</b> ${props.FIRE_NAME}<br>
-             <b>Alarm Date:</b> ${formatDate(props.ALARM_DATE)}<br>
-             <b>GIS Acres:</b> ${props.GIS_ACRES}<br>
-             <b>Year:</b> ${props.YEAR_}`
-          );
-        }
-      });
-      
-      // Add the filtered layer to the map.
-      filteredLayer.addTo(fireLayerGroup);
-    }
-
-    // Fetch the GeoJSON file.
-    fetch('med_quality.geojson')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(geojsonData => {
-        rawGeojsonData = geojsonData;
-        updateFireMarkers();
-      })
-      .catch(error => {
-        console.error('Error loading GeoJSON:', error);
-      });
-
-    // Optional: ZIP Code Geocoding using Nominatim.
-    document.getElementById('findZip').addEventListener('click', function() {
-      const zipCode = document.getElementById('zipInput').value.trim();
-      if (!zipCode) return;
-      const url = `https://nominatim.openstreetmap.org/search?postalcode=${zipCode}&country=USA&format=json`;
       fetch(url)
         .then(response => response.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lon = parseFloat(data[0].lon);
-            map.setView([lat, lon], 12);
-            if (zipMarker) {
-              zipMarker.setLatLng([lat, lon]);
+        .then(dataResponse => {
+          if (dataResponse && dataResponse.length > 0) {
+            var lat = parseFloat(dataResponse[0].lat);
+            var lon = parseFloat(dataResponse[0].lon);
+            
+            // Recenter map and add a marker for the zip code location
+            map.setView([lat, lon], 13);
+            L.marker([lat, lon]).addTo(map)
+              .bindPopup('Zip Code: ' + zipcode + '<br>Lat: ' + lat + '<br>Lon: ' + lon)
+              .openPopup();
+            
+            // Define a search radius (in degrees) for nearby fires – adjust as needed
+            var searchRadius = 0.01;
+            // Optionally, display the search area as a circle on the map
+            L.circle([lat, lon], { radius: searchRadius * 111320, color: 'red', fillOpacity: 0.1 }).addTo(map);
+            
+            // Check for nearby fires
+            let nearbyFires = get_nearby_fires([lon, lat], searchRadius);
+            console.log('Nearby Fires:', nearbyFires);
+            
+            // Clear previous fire markers
+            fireLayer.clearLayers();
+            
+            if (nearbyFires.length > 0) {
+              nearbyFires.forEach(function(fire) {
+                // Assuming each fire feature has properties like FIRE_NAME and geometry
+                let fireName = fire.properties && fire.properties["FIRE_NAME"] ? fire.properties["FIRE_NAME"] : "Unknown Fire";
+                // Use the first coordinate of the geometry as a marker position
+                let coords = fire.geometry.coordinates[0][0];
+                let marker = L.marker([coords[1], coords[0]]).bindPopup("Fire: " + fireName);
+                fireLayer.addLayer(marker);
+              });
             } else {
-              zipMarker = L.marker([lat, lon]).addTo(map);
+              alert('No nearby fires detected.');
             }
-            zipMarker.bindPopup(
-              `<b>ZIP Code:</b> ${zipCode}<br>
-               <b>Latitude:</b> ${lat}<br>
-               <b>Longitude:</b> ${lon}`
-            ).openPopup();
           } else {
-            alert("No location found for this ZIP Code.");
+            alert('Location not found. Please enter a valid California zip code.');
           }
         })
         .catch(error => {
-          console.error('Error during geocoding:', error);
-          alert("There was an error retrieving the location.");
+          console.error('Error:', error);
+          alert('An error occurred. Please try again later.');
         });
     });
   </script>
 </body>
 </html>
-
