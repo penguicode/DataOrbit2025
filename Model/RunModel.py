@@ -10,7 +10,7 @@ model.load_state_dict(torch.load('fire_risk_model_weights.pth'))
 
 model.eval()
 
-df = pd.read_csv('download.csv')
+df = pd.read_csv('model.csv')
 
 test_data = df[['latitude', 'longitude', 'month', 'humidity']].values
 
