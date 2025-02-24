@@ -35,7 +35,7 @@ def generate_safe_fire_danger(num_points):
     return pd.DataFrame(fire_danger, columns=['fire danger'])
 
 
-df = pd.read_csv('Model\\unsafe_coordinates')
+df = pd.read_csv('C:\\Users\\Rex N\\Desktop\\DataOrbit2025\\Model\\unsafe_coordinates')
 
 unsafe_data_df = df.groupby('year', group_keys=False).apply(lambda x: x.sample(min(len(x), 250), random_state=42))
 unsafe_data_df['fire danger'] = 1.0

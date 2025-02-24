@@ -58,18 +58,3 @@ for epoch in range(epochs):
     #     print(f'Epoch {epoch}, Loss: {loss.item():.4f}')
 
 torch.save(model.state_dict(), 'fire_risk_model_weights.pth')
-
-# test_data = np.array([latitude, longitude, month, humidity])
-
-# test_data = np.array([[34.69101, -119.59117, 2, 0.72]])
-
-# test_data_scaled = scaler.transform(test_data)
-
-# test_data_tensor = torch.tensor(test_data_scaled, dtype=torch.float32)
-
-# model.eval()
-
-# with torch.no_grad():
-#     prediction = model(test_data_tensor)
-
-# print(f"Prediction (Fire Risk): {prediction.item():.4f}")
